@@ -23,12 +23,10 @@
     </div>
 
     <script> 
-        const API_KEY = process.env.API_KEY; // מקבלים מ-aistudio.google.com
-        const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
         const MODEL_PATH = "models/gemini-2.0-flash";
         async function askAI() {
-            const question = document.getElementById('userQuestion').value;
-            if (!question) return;
+            const questionText = document.getElementById('userQuestion').value;
+            if (!questionText) return;
 
             const resDiv = document.getElementById('responses');
             resDiv.innerHTML += `<div><b>אתה:</b> ${question}</div>`;
@@ -48,30 +46,24 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        system_instruction: {
-                            parts: [{ text: SYSTEM_PROMPT }]
-                        },
-                        contents: [
-                            { role: "user", parts: [{ text: question }] }
-                        ],
-                        safetySettings: safetySettings // זה פותר את רוב שגיאות ה-Permission
+                        question: questionText
                     })
                 });
 
                 const data = await response.json();
                 
                 if (data.error) {
-                    resDiv.innerHTML += `<div><b>שגיאה:</b> ${data.error.message}</div>`;
+                    resDiv.innerHTML += `<div style="color: #ff4757;"><b>שגיאה:</b> ${data.error}</div>`;
                 } else {
-                    const answer = data.candidates[0].content.parts[0].text;
-                    resDiv.innerHTML += `<div><b>AI:</b> ${answer.trim()}</div>`;
+                    // כאן אנחנו מושכים את answer כפי שהגדרנו ב-api/chat.js
+                    const answer = data.answer;
+                    resDiv.innerHTML += `<div><b>AI:</b> ${answer}</div>`;
                 }
-                } catch (e) {
-                    resDiv.innerHTML += `<div><b>שגיאה:</b> חיבור ה-API נכשל.</div>`;
-                }   
-            
-                document.getElementById('userQuestion').value = '';
-                resDiv.scrollTop = resDiv.scrollHeight;
+            } catch (e) {
+                resDiv.innerHTML += `<div style="color: #ff4757;"><b>שגיאה:</b> חיבור לשרת נכשל.</div>`;
+            } 
+
+            resDiv.scrollTop = resDiv.scrollHeight;
         }
 
     </script>
