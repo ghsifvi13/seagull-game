@@ -7,8 +7,9 @@
         body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 50px; }
         #chat-box { max-width: 600px; margin: 0 auto; background: #333; padding: 20px; border-radius: 10px; }
         #responses { height: 300px; overflow-y: auto; border-bottom: 1px solid #555; margin-bottom: 20px; text-align: right; padding: 10px; }
-        input { width: 80%; padding: 10px; border-radius: 5px; border: none; }
+        input { width: 80%; padding: 10px; border-radius: 5px; border: none; outline: none; }
         button { padding: 10px 20px; cursor: pointer; background: #ff4757; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #ff6b81; }
     </style>
 </head>
 <body>
@@ -18,54 +19,50 @@
 
     <div id="chat-box">
         <div id="responses"></div>
-        <input type="text" id="userQuestion" placeholder="שאלו שאלה של כן ולא בלבד">
+        <input type="text" id="userQuestion" placeholder="שאלו שאלה של כן ולא בלבד" onkeypress="if(event.key==='Enter') askAI()">
         <button onclick="askAI()">שאל</button>
     </div>
 
     <script> 
-        const MODEL_PATH = "models/gemini-2.0-flash";
         async function askAI() {
-            const questionText = document.getElementById('userQuestion').value;
+            const inputElement = document.getElementById('userQuestion');
+            const questionText = inputElement.value.trim();
+            
+            // בדיקה שהשאלה לא ריקה
             if (!questionText) return;
 
             const resDiv = document.getElementById('responses');
-            resDiv.innerHTML += `<div><b>אתה:</b> ${question}</div>`;
             
-            // הגדרות בטיחות כדי למנוע חסימה בגלל נושא ההתאבדות/אכילת אדם בחידה
-            const safetySettings = [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-            ];
-
-            const url = `/api/chat`;
+            // תיקון: השתמשתי ב-questionText במקום ב-question שלא היה מוגדר
+            resDiv.innerHTML += `<div><b>אתה:</b> ${questionText}</div>`;
+            inputElement.value = ''; // ניקוי התיבה
 
             try {
-                const response = await fetch(url, {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        question: questionText
+                        question: questionText // המפתח 'question' חייב להתאים למה שכתבת ב-api/chat.js
                     })
                 });
 
                 const data = await response.json();
-                
+
                 if (data.error) {
+                    // הצגת שגיאה מהשרת אם יש כזו
                     resDiv.innerHTML += `<div style="color: #ff4757;"><b>שגיאה:</b> ${data.error}</div>`;
                 } else {
-                    // כאן אנחנו מושכים את answer כפי שהגדרנו ב-api/chat.js
+                    // שליפת ה-answer כפי שהגדרת ב-Backend
                     const answer = data.answer;
                     resDiv.innerHTML += `<div><b>AI:</b> ${answer}</div>`;
                 }
             } catch (e) {
-                resDiv.innerHTML += `<div style="color: #ff4757;"><b>שגיאה:</b> חיבור לשרת נכשל.</div>`;
+                resDiv.innerHTML += `<div style="color: #ff4757;"><b>שגיאה:</b> חיבור לשרת נכשל. וודא שהעלית את התיקייה api ל-Vercel.</div>`;
             } 
 
+            // גלילה אוטומטית למטה
             resDiv.scrollTop = resDiv.scrollHeight;
         }
-
     </script>
 </body>
 </html>
