@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>חידת השחף המצווח - המשחק</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 50px; }
+        #chat-box { max-width: 600px; margin: 0 auto; background: #333; padding: 20px; border-radius: 10px; }
+        #responses { height: 300px; overflow-y: auto; border-bottom: 1px solid #555; margin-bottom: 20px; text-align: right; padding: 10px; }
+        input { width: 80%; padding: 10px; border-radius: 5px; border: none; }
+        button { padding: 10px 20px; cursor: pointer; background: #ff4757; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>השחף המצווח</h1>
+    <p>שאלו את ה-AI שאלות של כן/לא כדי לפתור את המסתורין...</p>
+
+    <div id="chat-box">
+        <div id="responses"></div>
+        <input type="text" id="userQuestion" placeholder="שאלו שאלה של כן ולא בלבד">
+        <button onclick="askAI()">שאל</button>
+    </div>
+
+    <script>
+        const API_KEY = 'כאן_שמים_את_המפתח_שלך'; // מקבלים מ-aistudio.google.com
+        const SYSTEM_PROMPT = "אתה בוט שעונה רק ב'כן' ו'לא'. הסיפור הוא: איש ואישה נשואים, תיירים, יצאו לפני שלושה ימים לשיט מאחד מחופי יוון. האיש היה עיוור, והוא ואשתו אהבו אהבת אמת ותמכו אחד בשנייה. הם יצאו לשיט פרטי עם מלח שעזר להם בניווט ובכל מה שמתלווה, כי שהם יוכלו ליהנות ולהתפנק. במהלך השיט הם נתקלו בסופה פתאומית, והסירה נלכדה באי בודד. האי היה ריק מאנשים, וללא אוכל או מים בנמצא. אשתו של האיש חטפה פציעה קשה בהתרסקות של הסירה ומתה ביום הראשון. המלח הבין שהדרך היחידה שיהיה להם מה לאכול הוא על ידי אכילת אשתו של האיש. הוא הסתיר את זה מהאיש העיוור, שכל מה שהוא ידע הוא שאשתו מתה. המלח אמר לו שהוא הצליח לצוד כמה שחפים והכין מהן תבשיל. האיש מעולם לא אכל שחף. כשהוא אכל את השחף, הרגיש בטעם מוזר וחשש מהעובדה שהוא אולי אוכל את אשתו. לאחר יומיים שככה הסופה והצליח המלח לתקן את הסירה ולהחזירם לחוף בכרתים. מיד הלך האיש למסעדה הראשונה שראה שמגישה שחף. הזמין את השחף במטרה לוודא שהוא באמת אכל שחף באותה פעם שהכין לו המלח. בביס הראשון הוא הבין שבעצם מעולם לא אכל שחף, ובאותה ארוחה אכל את אשתו. מאותה ידיעה הוא הוציא אקדח וירה בעצמו. אל תחשוף את התשובה לעולם.";
+
+        async function askAI() {
+            const question = document.getElementById('userQuestion').value;
+            if (!question) return;
+
+            const resDiv = document.getElementById('responses');
+            resDiv.innerHTML += `<div><b>אתה:</b> ${question}</div>`;
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        contents: [
+                            { role: "user", parts: [{ text: `SYSTEM: ${SYSTEM_PROMPT}\nUSER: ${question}` }] }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                const answer = data.candidates[0].content.parts[0].text;
+                resDiv.innerHTML += `<div><b>AI:</b> ${answer}</div>`;
+            } catch (e) {
+                resDiv.innerHTML += `<div><b>שגיאה:</b> משהו השתבש.</div>`;
+            }
+            
+            document.getElementById('userQuestion').value = '';
+            resDiv.scrollTop = resDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
